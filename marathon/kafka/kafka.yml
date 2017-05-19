@@ -1,0 +1,45 @@
+- name: Deploy kafka mq
+  marathon:
+    marathon_uri: "{{ marathon_uri }}"
+    group_id: kafka
+    group_json:
+        dependencies:
+            - /core/lb
+            - /core/logging
+        apps:
+        -   id: "kafka"
+            cmd:
+            cpus: 4
+            mem: 2000
+            disk: 0
+            instances: 1
+            container:
+              type: DOCKER
+              volumes:
+              - containerPath: "kafkalogs"
+                mode: "RW"
+                persistent:
+                 type: "root"
+                 size: 2000
+              - containerPath: "/tmp/kafka-logs"
+                hostPath: "kafkalogs"
+                mode: "RW"
+              docker:
+                image: spotify/kafka
+                network: HOST
+                privileged: false
+                parameters: "{{ docker_log_driver_parameters }}"
+                forcePullImage: false
+            env:
+                ADVERTISED_HOST: tlsisbld124l.tl.{{ top_domain }}
+                ADVERTISED_PORT: '9092'
+                AUTO_CREATE_TOPICS: 'true'
+            constraints:
+                - - hostname
+                  - LIKE
+                  - tlsisbld124l.tl.{{ top_domain }}
+            residency:
+                taskLostBehavior: "WAIT_FOREVER"
+            upgradeStrategy:
+                minimumHealthCapacity: 0.5
+                maximumOverCapacity: 0

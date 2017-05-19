@@ -7,4 +7,4 @@
     - include: "ci/artifactory.yml"
     - include: "ci/nexus.yml"
     - include: "ci/buildbot.yml"
-    - include: "ci/github_hooks.yml"
+#    - include: "ci/github_hooks.yml"

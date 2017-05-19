@@ -1,0 +1,56 @@
+- name: Deploy github_hooks
+  marathon:
+    marathon_uri: "{{ marathon_uri }}"
+    group_id: ci/gitlabhooks
+    group_json:
+        dependencies:
+            - /core/lb
+            - /core/logging
+            - /ci/backend
+        apps:
+        -
+            id: gitlabhooks
+            cpus: 1
+            mem: 512
+            disk: 0
+            instances: 1
+            cmd: pipenv run gunicorn -b :8000 application:app
+            container:
+              type: DOCKER
+              volumes: []
+              docker:
+                image: forestscribe/gitlab-webhook-kafka
+                network: BRIDGE
+                privileged: false
+                parameters: "{{ docker_log_driver_parameters }}"
+                forcePullImage: true
+                portMappings:
+                - containerPort: 8000
+                  protocol: tcp
+                  servicePort: "{{ servicePorts.github_hooks }}"
+            env:
+                KAFKA_SERVER: tlsisbld124l.tl.{{ top_domain }}:9092
+            labels:
+              traefik.enable: "true"
+              traefik.frontend.rule: "PathPrefixStrip:/gitlab_hook"
+        -
+            id: gitlabcreatehook
+            cpus: .1
+            mem: 512
+            disk: 0
+            instances: 1
+            container:
+              type: DOCKER
+              volumes: []
+              docker:
+                image: forestscribe/gitlab-create-hook
+                network: BRIDGE
+                privileged: false
+                parameters: "{{ docker_log_driver_parameters }}"
+                forcePullImage: true
+                portMappings: []
+            env:
+                KAFKA_SERVER: tlsisbld124l.tl.{{ top_domain }}:9092
+                GITLAB_SERVER: https://gitlab.forestscribe.{{ top_domain }}/
+                GITLAB_TOKEN: "{{ zk.secrets.gitlab_token }}"
+                GITLAB_HOOK_URL: https://forestscribe.{{ top_domain }}/gitlab_hook

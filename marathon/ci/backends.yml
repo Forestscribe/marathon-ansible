@@ -72,7 +72,7 @@
 
         -   id: "neo4j"
             cmd:
-            cpus: 8
+            cpus: 3
             mem: 8000
             disk: 0
             instances: 1
@@ -98,7 +98,7 @@
                   protocol: tcp
                   servicePort: "{{ servicePorts.neo4j }}"
                 - containerPort: 7687
-                  hostPort: 7687 # Freeze port for redirection
+                  #hostPort: 7687 # Freeze port for redirection
                   protocol: tcp
                   servicePort: "{{ servicePorts.neo4jbolt }}"
             residency:
@@ -141,3 +141,43 @@
               HAPROXY_BIND_ADDR: 172.17.0.1
             healthChecks:
             - "{{ basic_tcp_health_check }}"
+
+        -   id: "dgraph"
+            cpus: 3
+            mem: 8000
+            disk: 0
+            instances: 1
+            cmd: 'dgraph --bindall=true'
+            container:
+              type: DOCKER
+              volumes:
+              - containerPath: "dgraphdata"
+                mode: "RW"
+                persistent:
+                 type: "root"
+                 size: 1000
+              - containerPath: "/dgraph"
+                hostPath: "dgraphdata"
+                mode: "RW"
+              docker:
+                image: dgraph/dgraph
+                network: BRIDGE
+                privileged: false
+                parameters: "{{ docker_log_driver_parameters }}"
+                forcePullImage: false
+                portMappings:
+                - containerPort: 8080
+                  protocol: tcp
+                  servicePort: "{{ servicePorts.dgraph }}"
+            residency:
+                taskLostBehavior: "WAIT_FOREVER"
+            upgradeStrategy:
+                minimumHealthCapacity: 0.5
+                maximumOverCapacity: 0
+            labels:
+              HAPROXY_GROUP: external
+              HAPROXY_BIND_ADDR: 172.17.0.1
+              traefik.enable: "true"
+              traefik.frontend.rule: "Host:dgraph.{{ sub_domain }}"
+            env:
+                NEO4J_AUTH: none

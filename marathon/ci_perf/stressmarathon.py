@@ -105,9 +105,11 @@ def sendCollectd(datas):
         message += 'ciperf {}={} {}\n'.format(
             name, value, int(time.time()))
     try:
-       requests.post(INFLUX_URL + "/write?db=mydb", data=message, verify=False)
+        r = requests.post(INFLUX_URL + "write?db=mydb", data=message, verify=False)
+        print INFLUX_URL, r.content
     except:
-       pass
+        pass
+
 
 @argh.arg('num_builds', type=int)
 @argh.arg('num_workers', type=int)
@@ -141,7 +143,7 @@ def main(num_builds, num_workers, num_masters, config_kind, numlines, sleep, fir
     except:
         sendCollectd([("restarted", 1)])
         restartPgAndMaster(num_masters)
-        return 
+        return
     finished = False
     builds = []
     latencies = []

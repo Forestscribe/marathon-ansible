@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+spec:
+  ports:
+  - port: 9200
+  selector:
+    k8s-app: logstash
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: logstash
+    name: logstash
+  name: logstash
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        k8s-app: logstash
+    spec:
+      containers:
+      - name: logstash
+        image: logstash:5
+        env:
+        - name: PORT
+          value: "9200"
+        ports:
+        - containerPort: 9200
+          name: logstash
+      volumes:
+      - name: logstash
+        persistentVolumeClaim:
+          claimName: logstash
+      serviceAccountName: default

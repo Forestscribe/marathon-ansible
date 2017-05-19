@@ -33,6 +33,7 @@ servicePorts:
     neo4j:            30041
     neo4jbolt:        30042
     redis:            30044
+    dgraph:           30045
 
     crossbar:         30050
 

@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  connection: local
+  tasks:
+    - include: "kafka/kafka.yml"
+    - include: "ci/gitlab_hooks.yml"
